@@ -30,7 +30,7 @@ def extract_features(image, feature_extractor):
     image = np.array(image)
     image = np.expand_dims(image, axis=0)
     image = preprocess_input(image)
-    feature = feature_extractor.predict(image, verbose=0)
+    image_features = extract_features(image, feature_extractor)
     return feature
 
 # Hàm dự đoán mô tả hình ảnh
