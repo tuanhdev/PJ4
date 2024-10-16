@@ -9,7 +9,7 @@ import pickle
 # Tải mô hình và tokenizer
 @st.cache_resource
 def load_inception_model():
-    return load_model('inception_caption_model.h5')
+    return load_model('inception_caption_model_lr_0.0001.h5')
 
 @st.cache_resource
 def load_tokenizer():
