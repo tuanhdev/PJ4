@@ -6,8 +6,9 @@ from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_i
 from PIL import Image
 import numpy as np
 import pickle
+from googletrans import Translator
 
-# Tải mô hình và tokenizer
+# Tải mô hình chú thích ảnh, tokenizer và mô hình trích xuất đặc trưng
 @st.cache_resource
 def load_caption_model():
     return load_model('inception_caption_model_lr_0.0001.h5')
@@ -19,7 +20,7 @@ def load_tokenizer():
 
 @st.cache_resource
 def load_feature_extractor():
-    # Sử dụng InceptionV3 để trích xuất đặc trưng, không bao gồm lớp cuối
+    # Tải mô hình InceptionV3 cho việc trích xuất đặc trưng
     model = InceptionV3(weights='imagenet')
     model = tf.keras.Model(model.input, model.layers[-2].output)
     return model
@@ -30,7 +31,7 @@ def extract_features(image, feature_extractor):
     image = np.array(image)
     image = np.expand_dims(image, axis=0)
     image = preprocess_input(image)
-    image_features = extract_features(image, feature_extractor)
+    feature = feature_extractor.predict(image, verbose=0)
     return feature
 
 # Hàm dự đoán mô tả hình ảnh
@@ -47,7 +48,7 @@ def generate_caption(model, image_features, tokenizer, max_length):
         in_text += ' ' + word
         if word == 'endseq':
             break
-    return in_text
+    return in_text.replace('startseq', '').replace('endseq', '').strip()
 
 # Ứng dụng Streamlit
 st.title("Image Caption Generator")
@@ -60,10 +61,19 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption='Hình ảnh đã tải lên.', use_column_width=True)
     
-    # Tải mô hình
+    # Tải mô hình và tokenizer
     model = load_caption_model()
     tokenizer = load_tokenizer()
     feature_extractor = load_feature_extractor()
     
     # Trích xuất đặc trưng từ ảnh
-    image_features = extract_feature
+    image_features = extract_features(image, feature_extractor)
+    
+    # Sinh mô tả
+    caption = generate_caption(model, image_features, tokenizer, max_length=34)
+    st.write("**Mô tả hình ảnh:**", caption)
+    
+    # Dịch mô tả sang tiếng Việt
+    translator = Translator()
+    translation = translator.translate(caption, src='en', dest='vi')
+    st.write("**Mô tả hình ảnh (Tiếng Việt):**", translation.text)
